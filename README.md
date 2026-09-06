@@ -108,6 +108,8 @@ Cấu hình dịch vụ nằm ở [`render.yaml`](render.yaml).
 | `docs/RUNBOOK.md` | Sao lưu, khôi phục, phân quyền, giới hạn đã biết |
 | `docs/BACKLOG.md` | Danh sách công việc theo phase, có ID và trạng thái |
 | `docs/ACCEPTANCE.md` | Bảng nghiệm thu Task/Test ID + JSON báo cáo |
+| `docs/deploy-render-neon.md` | Triển khai lên Render Free + Neon Free: tạo tài nguyên, biến môi trường, migration, seed, rollback, sao lưu |
+| `docs/deployment-report.md` | Stack cuối, tệp đã đổi, kết quả kiểm thử, hạn mức gói Free, việc còn cần làm |
 
 ## Nguồn nội dung và bản quyền
 
