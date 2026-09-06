@@ -1,0 +1,23 @@
+node_modules/
+dist/
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+
+# Không đưa giáo trình gốc hay ảnh scan vào repo / bản build công khai
+*.pdf
+content/**/scan/**
+e2e/shots/*.png
+!e2e/shots/.gitkeep
+
+# nhật ký, tệp tạm
+*.log
+.DS_Store
+/tmp/
+coverage/
+
+# bản sao lưu cơ sở dữ liệu — CHỨA DỮ LIỆU HỌC SINH, không bao giờ đưa vào Git
+backups/
+*.dump
+*.sql.gz

@@ -1,0 +1,180 @@
+{
+  "generatedAt": "2026-09-06T04:51:12.471Z",
+  "note": "Tất cả mục ở trạng thái draft. reviewed/published = 0 cho tới khi giáo viên duyệt trong app.",
+  "totals": {
+    "vocab": 104,
+    "extendedVocab": 11,
+    "sentence": 49,
+    "grammar": 24
+  },
+  "byLesson": [
+    {
+      "lessonId": "yct1-l1",
+      "n": 1,
+      "titleVi": "Xin chào!",
+      "extracted": {
+        "vocab": 14,
+        "sentence": 3,
+        "grammar": 2
+      },
+      "draft": 19,
+      "reviewed": 0,
+      "published": 0,
+      "unresolved": 0
+    },
+    {
+      "lessonId": "yct1-l2",
+      "n": 2,
+      "titleVi": "Bạn tên là gì?",
+      "extracted": {
+        "vocab": 9,
+        "sentence": 5,
+        "grammar": 3
+      },
+      "draft": 17,
+      "reviewed": 0,
+      "published": 0,
+      "unresolved": 0
+    },
+    {
+      "lessonId": "yct1-l3",
+      "n": 3,
+      "titleVi": "Bạn ấy là ai?",
+      "extracted": {
+        "vocab": 7,
+        "sentence": 4,
+        "grammar": 2
+      },
+      "draft": 13,
+      "reviewed": 0,
+      "published": 0,
+      "unresolved": 0
+    },
+    {
+      "lessonId": "yct1-l4",
+      "n": 4,
+      "titleVi": "Nhà mình có bốn người",
+      "extracted": {
+        "vocab": 12,
+        "sentence": 4,
+        "grammar": 3
+      },
+      "draft": 19,
+      "reviewed": 0,
+      "published": 0,
+      "unresolved": 0
+    },
+    {
+      "lessonId": "yct1-l5",
+      "n": 5,
+      "titleVi": "Mình sáu tuổi",
+      "extracted": {
+        "vocab": 3,
+        "sentence": 4,
+        "grammar": 2
+      },
+      "draft": 9,
+      "reviewed": 0,
+      "published": 0,
+      "unresolved": 0
+    },
+    {
+      "lessonId": "yct1-l6",
+      "n": 6,
+      "titleVi": "Bạn cao thật!",
+      "extracted": {
+        "vocab": 12,
+        "sentence": 4,
+        "grammar": 2
+      },
+      "draft": 18,
+      "reviewed": 0,
+      "published": 0,
+      "unresolved": 0
+    },
+    {
+      "lessonId": "yct1-l7",
+      "n": 7,
+      "titleVi": "Đây là chó của ai?",
+      "extracted": {
+        "vocab": 10,
+        "sentence": 5,
+        "grammar": 2
+      },
+      "draft": 17,
+      "reviewed": 0,
+      "published": 0,
+      "unresolved": 0
+    },
+    {
+      "lessonId": "yct1-l8",
+      "n": 8,
+      "titleVi": "Mình đi cửa hàng",
+      "extracted": {
+        "vocab": 8,
+        "sentence": 4,
+        "grammar": 2
+      },
+      "draft": 14,
+      "reviewed": 0,
+      "published": 0,
+      "unresolved": 0
+    },
+    {
+      "lessonId": "yct1-l9",
+      "n": 9,
+      "titleVi": "Hôm nay là thứ mấy?",
+      "extracted": {
+        "vocab": 14,
+        "sentence": 5,
+        "grammar": 2
+      },
+      "draft": 21,
+      "reviewed": 0,
+      "published": 0,
+      "unresolved": 0
+    },
+    {
+      "lessonId": "yct1-l10",
+      "n": 10,
+      "titleVi": "Bây giờ là mấy giờ?",
+      "extracted": {
+        "vocab": 6,
+        "sentence": 5,
+        "grammar": 2
+      },
+      "draft": 13,
+      "reviewed": 0,
+      "published": 0,
+      "unresolved": 0
+    },
+    {
+      "lessonId": "yct1-l11",
+      "n": 11,
+      "titleVi": "Bạn ăn gì?",
+      "extracted": {
+        "vocab": 9,
+        "sentence": 6,
+        "grammar": 2
+      },
+      "draft": 17,
+      "reviewed": 0,
+      "published": 0,
+      "unresolved": 0
+    },
+    {
+      "lessonId": "yct1-l12",
+      "n": 12,
+      "titleVi": "Ôn tập",
+      "extracted": {
+        "vocab": 0,
+        "sentence": 0,
+        "grammar": 0
+      },
+      "draft": 0,
+      "reviewed": 0,
+      "published": 0,
+      "unresolved": 1
+    }
+  ]
+}

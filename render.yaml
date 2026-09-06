@@ -1,0 +1,48 @@
+# Bản thiết kế dịch vụ trên Render — MỘT web service Free phục vụ cả giao diện lẫn API.
+#
+# Tệp này KHÔNG chứa giá trị bí mật. DATABASE_URL khai báo `sync: false`, nghĩa là Render
+# hỏi giá trị khi tạo dịch vụ và lưu trong kho biến môi trường của dịch vụ, không nằm trong Git.
+#
+# Tài liệu tham chiếu: https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: yct-learn
+    runtime: node
+    plan: free
+    # Singapore là vùng gần Việt Nam nhất trong các vùng Render đang có.
+    # Nếu vùng này không tạo được dịch vụ Free, đổi sang oregon và đặt Neon cùng vùng tương ứng.
+    region: singapore
+    branch: main
+    autoDeployTrigger: commit
+
+    # Monorepo npm workspaces: build TỪ GỐC repo, không dùng rootDir.
+    # NODE_ENV=production khiến npm bỏ qua devDependencies, mà TypeScript/Vite nằm ở đó
+    # → phải có --include=dev thì mới build được.
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: npm run -w @yct/server start
+
+    # Chỉ kiểm tra tiến trình còn sống. Endpoint này KHÔNG truy vấn cơ sở dữ liệu:
+    # nếu nó chạm DB thì Neon không bao giờ ngủ được và giờ compute miễn phí sẽ cạn.
+    healthCheckPath: /api/health
+
+    envVars:
+      # Phiên bản Node đã kiểm thử. Đổi ở đây thì đổi cả .nvmrc và engines trong package.json.
+      - key: NODE_VERSION
+        value: 22.18.0
+      - key: NODE_ENV
+        value: production
+
+      # Biến lúc BUILD: bắt giao diện gọi API thật thay vì chạy bản demo trên máy người dùng.
+      # Thiếu biến này, trang web vẫn chạy nhưng là bản demo cục bộ — không có lớp học thật.
+      - key: VITE_BACKEND
+        value: server
+
+      # Chuỗi kết nối Neon. sync: false = Render hỏi và cất riêng, KHÔNG lưu vào Git.
+      # Dùng chuỗi POOLED (…-pooler…) cho lúc chạy; migration dùng chuỗi trực tiếp.
+      - key: DATABASE_URL
+        sync: false
+
+      # Ứng dụng chạy một tiến trình trên gói Free (0.1 CPU) — pool nhỏ là đủ,
+      # và ít kết nối rảnh giúp Neon ngủ sớm hơn.
+      - key: PG_POOL_MAX
+        value: "5"

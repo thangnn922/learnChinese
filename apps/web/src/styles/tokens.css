@@ -1,0 +1,83 @@
+/*
+ * Design tokens — giữ nhận diện của bản HTML gốc (nền giấy, đỏ son, xanh ngọc, vàng),
+ * bổ sung biến thể ĐẠT TƯƠNG PHẢN cho chữ.
+ *
+ * Tỉ lệ tương phản đã đo (xem docs/ACCESSIBILITY.md):
+ *   ink        #2a2420 / paper  = 12.21   ✓
+ *   ink-soft   #5a4f43 / paper  =  6.36   ✓  (bản gốc #6b5f52 = 4.95, sát ngưỡng)
+ *   seal-text  #8a2b2b / paper  =  6.80   ✓  (bản gốc #b23a3a = 4.70)
+ *   jade-text  #35564a / paper  =  6.49   ✓  (bản gốc #4f7c6d = 3.77 ✗ — KHÔNG dùng làm chữ)
+ *   gold-text  #7a5f2f / paper  =  4.78   ✓  (bản gốc #b08d57 = 2.46 ✗ — chỉ dùng làm nền)
+ *   #ffffff trên seal            =  5.90   ✓
+ *   #ffffff trên jade            =  4.73   ✓
+ *   ink trên gold                =  4.95   ✓
+ */
+:root {
+  /* nền */
+  --paper: #ece5d6;
+  --card: #f7f2e7;
+  --surface: #ffffff;
+
+  /* chữ */
+  --ink: #2a2420;
+  --ink-soft: #5a4f43;
+  --ink-muted: #6b5f52; /* chỉ cho chữ ≥ 18.66px in đậm */
+
+  /* nhấn — nền */
+  --seal: #b23a3a;
+  --seal-strong: #8f2c2c;
+  --jade: #4f7c6d;
+  --jade-strong: #3c5f53;
+  --gold: #b08d57;
+
+  /* nhấn — chữ (đạt 4.5:1 trên nền giấy) */
+  --seal-text: #8a2b2b;
+  --jade-text: #35564a;
+  --gold-text: #7a5f2f;
+
+  --line: rgba(42, 36, 32, 0.14);
+  --line-strong: rgba(42, 36, 32, 0.28);
+  --focus: #1c4f8f;
+
+  --ok-bg: #e4efe9;
+  --ok-text: #2c5546;
+  --bad-bg: #f7e4e4;
+  --bad-text: #8a2b2b;
+  --warn-bg: #fbf0d9;
+  --warn-text: #6d5218;
+
+  /* kích thước */
+  --tap: 44px;
+  --r-sm: 10px;
+  --r-md: 14px;
+  --r-lg: 20px;
+  --card-max: 640px;
+  --card-learn-max: 560px;
+  --dash-max: 1180px;
+
+  --font-vi: 'Nunito', 'Be Vietnam Pro', 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    'Noto Sans', sans-serif;
+  --font-zh: 'Noto Serif SC', 'Songti SC', 'Source Han Serif SC', 'Noto Serif CJK SC',
+    'Microsoft YaHei', serif;
+
+  --shadow-card: 0 8px 24px rgba(42, 36, 32, 0.1);
+  --shadow-pop: 0 16px 40px rgba(42, 36, 32, 0.24);
+
+  --dur-fast: 120ms;
+  --dur: 200ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-fast: 0ms;
+    --dur: 0ms;
+  }
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --ink-soft: #3d352c;
+    --ink-muted: #3d352c;
+    --line: rgba(42, 36, 32, 0.4);
+  }
+}

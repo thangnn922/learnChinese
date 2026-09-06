@@ -1,0 +1,213 @@
+{
+  "curriculumId": "yct",
+  "level": 1,
+  "edition": "standard-course",
+  "nameVi": "YCT 1 — Giáo trình chuẩn",
+  "sourceVerified": false,
+  "noteVi": "Trích xuất từ bản scan \"YCT 1 SGK.pdf\". Nghĩa tiếng Việt do AI dịch từ gloss tiếng Anh của sách — CHƯA có giáo viên duyệt.",
+  "lessons": [
+    {
+      "lessonId": "yct1-l1",
+      "curriculumId": "yct",
+      "level": 1,
+      "edition": "standard-course",
+      "n": 1,
+      "titleZh": "你好！",
+      "titlePinyin": "Nǐ hǎo!",
+      "titleEn": "Hello!",
+      "titleVi": "Xin chào!",
+      "goalsVi": [
+        "Chào hỏi và tạm biệt bằng tiếng Trung",
+        "Đếm từ 1 đến 10"
+      ],
+      "printedStart": 1,
+      "printedEnd": 4
+    },
+    {
+      "lessonId": "yct1-l2",
+      "curriculumId": "yct",
+      "level": 1,
+      "edition": "standard-course",
+      "n": 2,
+      "titleZh": "你叫什么？",
+      "titlePinyin": "Nǐ jiào shénme?",
+      "titleEn": "What's your name?",
+      "titleVi": "Bạn tên là gì?",
+      "goalsVi": [
+        "Hỏi và nói tên của mình",
+        "Nói “Rất vui được làm quen”"
+      ],
+      "printedStart": 5,
+      "printedEnd": 8
+    },
+    {
+      "lessonId": "yct1-l3",
+      "curriculumId": "yct",
+      "level": 1,
+      "edition": "standard-course",
+      "n": 3,
+      "titleZh": "他是谁？",
+      "titlePinyin": "Tā shì shéi?",
+      "titleEn": "Who is he?",
+      "titleVi": "Bạn ấy là ai?",
+      "goalsVi": [
+        "Hỏi “Ai đó?”",
+        "Nói người đó là người nước nào"
+      ],
+      "printedStart": 9,
+      "printedEnd": 13
+    },
+    {
+      "lessonId": "yct1-l4",
+      "curriculumId": "yct",
+      "level": 1,
+      "edition": "standard-course",
+      "n": 4,
+      "titleZh": "我家有四口人。",
+      "titlePinyin": "Wǒ jiā yǒu sì kǒu rén.",
+      "titleEn": "There are four people in my family.",
+      "titleVi": "Nhà mình có bốn người",
+      "goalsVi": [
+        "Gọi tên các thành viên trong nhà",
+        "Nói nhà mình có mấy người"
+      ],
+      "printedStart": 14,
+      "printedEnd": 18
+    },
+    {
+      "lessonId": "yct1-l5",
+      "curriculumId": "yct",
+      "level": 1,
+      "edition": "standard-course",
+      "n": 5,
+      "titleZh": "我6岁。",
+      "titlePinyin": "Wǒ liù suì.",
+      "titleEn": "I'm 6 years old.",
+      "titleVi": "Mình sáu tuổi",
+      "goalsVi": [
+        "Hỏi và trả lời tuổi",
+        "Dùng 也 để nói “cũng vậy”"
+      ],
+      "printedStart": 19,
+      "printedEnd": 23
+    },
+    {
+      "lessonId": "yct1-l6",
+      "curriculumId": "yct",
+      "level": 1,
+      "edition": "standard-course",
+      "n": 6,
+      "titleZh": "你的个子真高！",
+      "titlePinyin": "Nǐ de gèzi zhēn gāo!",
+      "titleEn": "You're so tall!",
+      "titleVi": "Bạn cao thật!",
+      "goalsVi": [
+        "Gọi tên các bộ phận trên khuôn mặt",
+        "Miêu tả to – nhỏ, dài – ngắn, cao"
+      ],
+      "printedStart": 24,
+      "printedEnd": 28
+    },
+    {
+      "lessonId": "yct1-l7",
+      "curriculumId": "yct",
+      "level": 1,
+      "edition": "standard-course",
+      "n": 7,
+      "titleZh": "这是谁的狗？",
+      "titlePinyin": "Zhè shì shéi de gǒu?",
+      "titleEn": "Whose dog is this?",
+      "titleVi": "Đây là chó của ai?",
+      "goalsVi": [
+        "Gọi tên bốn con vật quen thuộc",
+        "Hỏi “của ai” và chỉ “đây / kia”"
+      ],
+      "printedStart": 29,
+      "printedEnd": 33
+    },
+    {
+      "lessonId": "yct1-l8",
+      "curriculumId": "yct",
+      "level": 1,
+      "edition": "standard-course",
+      "n": 8,
+      "titleZh": "我去商店。",
+      "titlePinyin": "Wǒ qù shāngdiàn.",
+      "titleEn": "I'm going to the store.",
+      "titleVi": "Mình đi cửa hàng",
+      "goalsVi": [
+        "Nói mình đang ở đâu",
+        "Nói mình đi đâu và rủ bạn cùng đi"
+      ],
+      "printedStart": 34,
+      "printedEnd": 38
+    },
+    {
+      "lessonId": "yct1-l9",
+      "curriculumId": "yct",
+      "level": 1,
+      "edition": "standard-course",
+      "n": 9,
+      "titleZh": "今天星期几？",
+      "titlePinyin": "Jīntiān xīngqī jǐ?",
+      "titleEn": "What day is it today?",
+      "titleVi": "Hôm nay là thứ mấy?",
+      "goalsVi": [
+        "Đọc tên bảy ngày trong tuần",
+        "Nói ngày sinh nhật của mình"
+      ],
+      "printedStart": 39,
+      "printedEnd": 43
+    },
+    {
+      "lessonId": "yct1-l10",
+      "curriculumId": "yct",
+      "level": 1,
+      "edition": "standard-course",
+      "n": 10,
+      "titleZh": "现在几点？",
+      "titlePinyin": "Xiànzài jǐ diǎn?",
+      "titleEn": "What time is it?",
+      "titleVi": "Bây giờ là mấy giờ?",
+      "goalsVi": [
+        "Hỏi và nói giờ",
+        "Hẹn giờ gặp nhau"
+      ],
+      "printedStart": 44,
+      "printedEnd": 48
+    },
+    {
+      "lessonId": "yct1-l11",
+      "curriculumId": "yct",
+      "level": 1,
+      "edition": "standard-course",
+      "n": 11,
+      "titleZh": "你吃什么？",
+      "titlePinyin": "Nǐ chī shénme?",
+      "titleEn": "What would you like to eat?",
+      "titleVi": "Bạn ăn gì?",
+      "goalsVi": [
+        "Gọi tên đồ ăn, đồ uống quen thuộc",
+        "Nói mình thích ăn / uống gì"
+      ],
+      "printedStart": 49,
+      "printedEnd": 53
+    },
+    {
+      "lessonId": "yct1-l12",
+      "curriculumId": "yct",
+      "level": 1,
+      "edition": "standard-course",
+      "n": 12,
+      "titleZh": "复习",
+      "titlePinyin": "Fùxí",
+      "titleEn": "Review",
+      "titleVi": "Ôn tập",
+      "goalsVi": [
+        "Ôn lại toàn bộ 11 bài"
+      ],
+      "printedStart": 54,
+      "printedEnd": 55
+    }
+  ]
+}

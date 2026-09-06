@@ -1,0 +1,73 @@
+{
+  "runAt": "2026-09-06T05:29:37.090Z",
+  "buildVersion": null,
+  "chromePath": "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
+  "results": [
+    {
+      "url": "http://localhost:4173/",
+      "runs": [
+        {
+          "performance": 97,
+          "accessibility": 100,
+          "bestPractices": 100,
+          "seo": 91,
+          "lcpMs": 2226,
+          "tbtMs": 30,
+          "cls": 0,
+          "transferKb": 131
+        },
+        {
+          "performance": 97,
+          "accessibility": 100,
+          "bestPractices": 100,
+          "seo": 91,
+          "lcpMs": 2278,
+          "tbtMs": 20,
+          "cls": 0,
+          "transferKb": 131
+        },
+        {
+          "performance": 98,
+          "accessibility": 100,
+          "bestPractices": 100,
+          "seo": 91,
+          "lcpMs": 1984,
+          "tbtMs": 25,
+          "cls": 0,
+          "transferKb": 131
+        }
+      ],
+      "median": {
+        "performance": 97,
+        "accessibility": 100,
+        "bestPractices": 100,
+        "seo": 91,
+        "lcpMs": 2226,
+        "tbtMs": 25,
+        "cls": 0,
+        "transferKb": 131
+      }
+    }
+  ],
+  "environment": {
+    "lighthouseVersion": "12.2.1",
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/141.0.0.0 Safari/537.36",
+    "formFactor": "mobile",
+    "screenEmulation": {
+      "mobile": true,
+      "width": 412,
+      "height": 823,
+      "deviceScaleFactor": 1.75,
+      "disabled": false
+    },
+    "throttling": {
+      "rttMs": 150,
+      "throughputKbps": 1638.4,
+      "requestLatencyMs": 562.5,
+      "downloadThroughputKbps": 1474.5600000000002,
+      "uploadThroughputKbps": 675,
+      "cpuSlowdownMultiplier": 4
+    }
+  },
+  "accessibilityFailures": []
+}
