@@ -74,6 +74,27 @@ export DATABASE_URL='postgresql://…@ep-abc-123.ap-southeast-1.aws.neon.tech/yc
 npm run db:migrate
 ```
 
+### Nếu bạn dùng Neon CLI
+
+`neon link` tạo `.env.local` với **ba** biến. Chú ý đúng biến:
+
+| Biến trong `.env.local` | Là chuỗi nào | Dùng để |
+|---|---|---|
+| `DATABASE_URL` | **pooled** (host có `-pooler`) | ứng dụng lúc chạy → dán vào Render |
+| `DATABASE_URL_UNPOOLED` | **direct** | migration, seed, `pg_dump`/`pg_restore` |
+
+Vì vậy khi nạp tệp này để chạy migration, phải **ghi đè** `DATABASE_URL` bằng bản direct:
+
+```bash
+set -a && . ./.env.local && set +a
+DATABASE_URL="$DATABASE_URL_UNPOOLED" npm run db:migrate
+DATABASE_URL="$DATABASE_URL_UNPOOLED" npm run db:seed
+```
+
+`.env.local` **chứa mật khẩu**. `.gitignore` đã chặn nó qua luật `.env.*`; `neon link` cũng tự
+thêm `.neon` (chỉ chứa ID, không có secret). Kiểm tra lại bất cứ lúc nào bằng
+`git check-ignore -v .env.local`.
+
 Kết quả mong đợi lần đầu: `✓ 001_init.sql`. Chạy lại lần nữa phải in `Lược đồ đã cập nhật.`
 và không thay đổi gì — migration có bảng lịch sử `schema_migrations` và an toàn khi chạy lại.
 
