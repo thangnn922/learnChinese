@@ -20,9 +20,41 @@ export async function itemsAt(revision: number, filter?: { lessonIds?: string[];
     sql += ` AND status = ANY($${params.length}::text[])`;
   }
   sql = sql.replace('SELECT payload FROM', 'SELECT payload, status FROM');
+  // Thứ tự PHẢI ổn định: bộ sinh câu hỏi dùng RNG có seed, nên cùng seed mà thứ tự đầu vào
+  // khác nhau sẽ ra bộ câu hỏi khác nhau. Postgres không bảo đảm thứ tự khi thiếu ORDER BY.
+  sql += ' ORDER BY item_id';
   const rows = await query<{ payload: Record<string, unknown>; status: string }>(sql, params);
   // Cột `status` là nguồn thật: payload có thể còn trạng thái cũ nếu được đổi bằng SQL.
   return rows.map((r) => ContentItemSchema.parse({ ...r.payload, status: r.status }));
+}
+
+/**
+ * Nội dung đã xuất bản của MỘT revision, nhớ trong bộ nhớ tiến trình.
+ *
+ * Revision là bất biến: xuất bản luôn tạo revision mới chứ không sửa revision cũ, nên bản nhớ
+ * không bao giờ cũ. Nhờ vậy luyện tập ẩn danh — vốn dựng lại bộ câu hỏi ở mỗi lần chấm — không
+ * phải đọc lại 571 dòng từ Neon mỗi lần, và Neon còn ngủ được.
+ */
+const publishedCache = new Map<number, ContentItem[]>();
+const PUBLISHED_CACHE_MAX = 3;
+
+export async function publishedItemsAt(revision: number): Promise<ContentItem[]> {
+  const hit = publishedCache.get(revision);
+  if (hit) return hit;
+  const items = await itemsAt(revision, { statuses: ['published'] });
+  publishedCache.set(revision, items);
+  // giữ vài revision gần nhất, đủ cho lúc vừa xuất bản xong mà vẫn còn người đang làm bài cũ
+  while (publishedCache.size > PUBLISHED_CACHE_MAX) {
+    const oldest = publishedCache.keys().next().value;
+    if (oldest === undefined) break;
+    publishedCache.delete(oldest);
+  }
+  return items;
+}
+
+/** Dùng trong kiểm thử: xoá bản nhớ để mỗi test bắt đầu từ trạng thái sạch. */
+export function clearPublishedCache(): void {
+  publishedCache.clear();
 }
 
 export interface PublishInput {

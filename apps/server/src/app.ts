@@ -39,7 +39,7 @@ import {
   verifyPassword,
   type AuthUser,
 } from './auth.js';
-import { headRevision, itemsAt, publish, rollback, RevisionConflict } from './content.js';
+import { headRevision, itemsAt, publishedItemsAt, publish, rollback, RevisionConflict } from './content.js';
 
 class HttpError extends Error {
   constructor(
@@ -639,14 +639,15 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
 
   /* ── trò chơi ────────────────────────────────────────────────────────── */
 
+  /* Trò chơi chỉ dùng nội dung ĐÃ XUẤT BẢN và không đọc, không ghi dữ liệu của ai.
+     Vì vậy không cần đăng nhập — trẻ vào là chơi được ngay. */
   app.get('/api/games/:kind', async (req) => {
-    userOf(req);
     const p = z.object({ kind: z.enum(['match', 'order']) }).parse(req.params);
-    const q = z.object({ lessons: z.string().default('') }).parse(req.query);
-    const lessonIds = q.lessons.split(',').filter(Boolean);
+    const q = z.object({ lessons: z.string().max(1000).default('') }).parse(req.query);
+    const lessonIds = q.lessons.split(',').filter(Boolean).slice(0, 30);
     if (!lessonIds.length) return null;
     const revision = await headRevision();
-    const items = await itemsAt(revision, { statuses: ['published'] });
+    const items = await publishedItemsAt(revision);
     const seed = `${p.kind}:${lessonIds.join(',')}:${Math.floor(Date.now() / 60000)}`;
     return p.kind === 'match'
       ? buildMatchGame(items, lessonIds as never, seed)
@@ -654,6 +655,134 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
   });
 
   /* ── giáo viên: nội dung ─────────────────────────────────────────────── */
+
+  /* ── luyện tập ẩn danh ────────────────────────────────────────────────
+     Trẻ vào luyện tập và chơi mà KHÔNG cần tài khoản. Ràng buộc của phần này:
+
+     - KHÔNG ghi gì vào cơ sở dữ liệu. Địa chỉ này công khai trên Internet; cho phép người
+       lạ tạo dòng dữ liệu là mở đường cho spam làm đầy 0.5 GB của gói Neon miễn phí.
+     - KHÔNG có tiến độ, không có cookie, không thu thập gì về đứa trẻ.
+     - Điểm vẫn do MÁY CHỦ chấm. Đáp án không bao giờ rời khỏi máy chủ, y như lượt học có
+       tài khoản — không tạo ra một đường chấm điểm yếu hơn song song.
+
+     Cách làm: bộ sinh câu hỏi tất định theo seed, nên thay vì lưu bộ câu hỏi, máy chủ
+     DỰNG LẠI đúng bộ đó từ `practiceId` mỗi lần chấm. `practiceId` mang sẵn phạm vi bài và
+     revision, nên phiên luyện tập sống sót qua cả việc tải lại trang lẫn khởi động lại máy chủ. */
+
+  const GuestScopeSchema = z.object({
+    curriculumId: z.enum(['yct', 'hsk']),
+    level: z.number().int().positive().max(10),
+    lessonIds: z.array(z.string().min(1).max(80)).min(1).max(20),
+    kinds: z.array(z.string().min(1).max(40)).min(1).max(12),
+    // Thấp hơn mức của lượt học có tài khoản: buổi tự học của trẻ chỉ 5–10 phút, và mỗi lần
+    // chấm phải dựng lại cả bộ câu hỏi nên không cho phép bộ quá lớn.
+    questionCount: z.number().int().min(1).max(40),
+    difficulty: z.enum(['easy', 'medium', 'hard']),
+  });
+  type GuestScope = z.infer<typeof GuestScopeSchema>;
+
+  const PracticeIdSchema = z.object({ v: z.literal(1), r: z.number().int().nonnegative(), n: z.string().min(1).max(40), s: GuestScopeSchema });
+
+  function encodePracticeId(revision: number, scope: GuestScope): string {
+    const payload = { v: 1 as const, r: revision, n: randomUUID(), s: scope };
+    return Buffer.from(JSON.stringify(payload), 'utf8').toString('base64url');
+  }
+
+  function decodePracticeId(practiceId: string): { revision: number; scope: GuestScope } {
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(Buffer.from(practiceId, 'base64url').toString('utf8'));
+    } catch {
+      throw new HttpError(400, ERROR_CODES.VALIDATION_FAILED, 'Buổi luyện tập không còn hợp lệ. Con bắt đầu lại nhé.');
+    }
+    const r = PracticeIdSchema.safeParse(parsed);
+    if (!r.success) {
+      throw new HttpError(400, ERROR_CODES.VALIDATION_FAILED, 'Buổi luyện tập không còn hợp lệ. Con bắt đầu lại nhé.');
+    }
+    return { revision: r.data.r, scope: r.data.s };
+  }
+
+  /** Dựng lại đúng bộ câu hỏi (kèm đáp án) mà `practiceId` mô tả. */
+  async function guestQuestions(practiceId: string, revision: number, scope: GuestScope): Promise<QuestionWithKey[]> {
+    const items = await publishedItemsAt(revision);
+    return generateQuestions({
+      items,
+      scopeLessonIds: scope.lessonIds as never,
+      kinds: scope.kinds as never,
+      requestedCount: scope.questionCount,
+      difficulty: scope.difficulty,
+      // seed CHÍNH là practiceId → cùng practiceId luôn ra cùng bộ câu hỏi
+      seed: practiceId,
+      allowPriorKnowledgeDistractors: false,
+      acceptStatuses: ['published'],
+    }).questions;
+  }
+
+  app.post('/api/practice/start', async (req) => {
+    const scope = GuestScopeSchema.parse(req.body);
+    const revision = await headRevision();
+    const practiceId = encodePracticeId(revision, scope);
+
+    const items = await publishedItemsAt(revision);
+    const res = generateQuestions({
+      items,
+      scopeLessonIds: scope.lessonIds as never,
+      kinds: scope.kinds as never,
+      requestedCount: scope.questionCount,
+      difficulty: scope.difficulty,
+      seed: practiceId,
+      allowPriorKnowledgeDistractors: false,
+      acceptStatuses: ['published'],
+    });
+    if (res.questions.length === 0) throw new HttpError(409, ERROR_CODES.EMPTY_BANK);
+
+    return {
+      practiceId,
+      revision,
+      // CHỈ phần câu hỏi — đáp án ở lại máy chủ, giống hệt lượt học có tài khoản
+      questions: res.questions.map((k) => k.question),
+      reducedNotice: res.reasonVi,
+    };
+  });
+
+  /* Tải lại trang hoặc mở lại đúng đường dẫn buổi luyện tập: dựng lại nguyên bộ câu hỏi
+     từ practiceId. Không cần lưu gì ở máy chủ. */
+  app.post('/api/practice/resume', async (req) => {
+    const body = z.object({ practiceId: z.string().min(8).max(4000) }).parse(req.body);
+    const { revision, scope } = decodePracticeId(body.practiceId);
+    const keys = await guestQuestions(body.practiceId, revision, scope);
+    if (keys.length === 0) throw new HttpError(409, ERROR_CODES.EMPTY_BANK);
+    return {
+      practiceId: body.practiceId,
+      revision,
+      questions: keys.map((k) => k.question),
+      reducedNotice: null,
+    };
+  });
+
+  app.post('/api/practice/answer', async (req) => {
+    const body = z
+      .object({
+        practiceId: z.string().min(8).max(4000),
+        questionId: z.string().min(1).max(300),
+        response: z.string().max(400),
+      })
+      .parse(req.body);
+
+    const { revision, scope } = decodePracticeId(body.practiceId);
+    const keys = await guestQuestions(body.practiceId, revision, scope);
+    const key = keys.find((k) => k.question.questionId === body.questionId);
+    if (!key) throw new HttpError(400, ERROR_CODES.VALIDATION_FAILED, 'Câu hỏi không thuộc buổi luyện tập này.');
+
+    const { correct } = grade(key, body.response);
+    return {
+      correct,
+      correctOptionId: key.correctOptionId,
+      explainVi: key.explainVi,
+      reveal: key.revealAfterAnswer,
+      duplicate: false,
+    };
+  });
 
   app.get('/api/teacher/content', async (req) => {
     teacherOf(req);

@@ -50,6 +50,15 @@ npm run -w @yct/server dev                      # API  http://127.0.0.1:8787
 VITE_BACKEND=server npm run -w @yct/web dev     # Web  http://localhost:5173
 ```
 
+### Chế độ khách (không đăng nhập)
+
+Trẻ vào thẳng trang là luyện tập và chơi được ngay, không cần tài khoản. Máy chủ **vẫn chấm
+điểm** (đáp án không bao giờ gửi về trình duyệt) nhưng **không lưu gì**: không tài khoản, không
+cookie, không dòng nào trong cơ sở dữ liệu. Tiến trình trong buổi giữ tạm ở `sessionStorage` của
+tab; đóng tab là mất, và giao diện nói thẳng điều đó ở mục Tiến độ.
+
+Đăng nhập chỉ cần khi muốn lưu tiến độ, nhận bài cô giao và để cô xem báo cáo.
+
 Seed **không** xuất bản nội dung nào: toàn bộ ở trạng thái `draft`.
 Giáo viên phải vào *Khu vực giáo viên → Nội dung*, chọn các mục, bấm **Đánh dấu đã duyệt**,
 rồi mới xuất bản. Học sinh chỉ thấy nội dung đã xuất bản.
@@ -60,7 +69,7 @@ rồi mới xuất bản. Học sinh chỉ thấy nội dung đã xuất bản.
 npm run typecheck                       # toàn bộ workspace
 npm run test:unit                       # 43 test logic thuần (packages/shared)
 DATABASE_URL=postgres://…/yct_test \
-  npm run -w @yct/server test           # 31 test tích hợp/triển khai trên Postgres THẬT
+  npm run -w @yct/server test           # 56 test tích hợp/triển khai trên Postgres THẬT
 npm run build                           # shared → server → web
 
 # đầu-cuối bằng trình duyệt thật (cần `vite preview` chạy ở :4173)

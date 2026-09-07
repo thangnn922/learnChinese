@@ -95,6 +95,9 @@ Mọi endpoint trả lỗi theo dạng `{ code, messageVi, details? }` với `co
 | POST | `/api/teacher/classrooms/:id/assignments` | teacher của lớp đó | 403 nếu lớp khác |
 | GET | `/api/teacher/classrooms/:id/report` | teacher của lớp đó | 403 nếu lớp khác |
 | POST | `/api/admin/users` | admin | **không có đăng ký tự do** |
+| POST | `/api/practice/start` | — | **luyện tập ẩn danh**: không đăng nhập, không ghi DB |
+| POST | `/api/practice/resume` | — | dựng lại bộ câu hỏi từ `practiceId` khi tải lại trang |
+| POST | `/api/practice/answer` | — | máy chủ chấm; đáp án không rời máy chủ |
 | GET | `/api/health` | — | liveness, **không** truy vấn DB |
 | GET | `/api/health/db` | — | readiness, 503 khi DB không phản hồi |
 | GET | `/*` | — | tệp tĩnh của `apps/web/dist`; điều hướng trang trả `index.html` |

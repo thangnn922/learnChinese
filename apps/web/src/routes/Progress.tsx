@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { formatAccuracyVi } from '@yct/shared';
 import { api } from '../api/index';
 import { useAsync } from '../hooks';
@@ -5,10 +6,33 @@ import { EmptyState, ErrorState, Loading } from '../components/States';
 
 export function ProgressPage() {
   const [state, reload] = useAsync(() => api().getProgress(), []);
+  const [me] = useAsync(() => api().me(), []);
 
   if (state.status === 'loading' || state.status === 'idle') return <Loading />;
   if (state.status === 'error') return <ErrorState message={state.message} onRetry={reload} />;
   const p = state.data;
+
+  // Khách luyện tập không có tiến độ được lưu. Nói thẳng điều đó, thay vì để trẻ vừa
+  // học xong lại thấy "chưa có dữ liệu" rồi tưởng mình làm sai ở đâu.
+  const isGuest = me.status === 'ok' && me.data === null;
+  if (isGuest) {
+    return (
+      <div className="page">
+        <h1>Tiến độ của con</h1>
+        <EmptyState icon="🌱" title="Buổi luyện tập không được lưu lại">
+          Con đang luyện tập ở chế độ khách nên máy không nhớ kết quả sau khi đóng trang. Con vẫn
+          học và chơi thoải mái nhé!
+          <br />
+          <br />
+          Muốn xem mình tiến bộ tới đâu thì đăng nhập bằng mã lớp cô giáo cho.
+          <br />
+          <Link className="link-tap" to="/giao-vien">
+            Khu vực giáo viên
+          </Link>
+        </EmptyState>
+      </div>
+    );
+  }
 
   if (p.totalAnswered === 0 && p.dueForReview.length === 0) {
     return (

@@ -12,6 +12,7 @@ import type {
   LessonId,
   ValidatedBatch,
 } from '@yct/shared';
+import { createGuestPractice, isGuestAttemptId } from './guestPractice';
 import type {
   AnswerResult,
   AttemptView,
@@ -70,6 +71,21 @@ async function req<T>(path: string, init?: RequestInit): Promise<T> {
 export class HttpApi implements LearnApi {
   readonly mode = 'server' as const;
 
+  /**
+   * Chưa đăng nhập thì dùng đường luyện tập ẩn danh.
+   *
+   * Cookie phiên là HttpOnly nên JS không đọc được; cookie `csrf` đi kèm nó thì đọc được và
+   * hết hạn cùng lúc, nên sự có mặt của `csrf` là dấu hiệu đủ tin cậy cho phía giao diện.
+   * Đây CHỈ là để chọn đường gọi API — mọi quyết định về quyền vẫn nằm ở máy chủ.
+   */
+  private signedIn(): boolean {
+    return readCookie('csrf') !== '';
+  }
+
+  private guest = createGuestPractice(<T,>(path: string, body: unknown) =>
+    req<T>(path, { method: 'POST', body: JSON.stringify(body) }),
+  );
+
   me = () => req<SessionUser | null>('/me');
   loginTeacher = (email: string, password: string) =>
     req<SessionUser>('/auth/teacher/login', { method: 'POST', body: JSON.stringify({ email, password }) });
@@ -86,9 +102,18 @@ export class HttpApi implements LearnApi {
     req<CatalogView>(`/curricula/${curriculumId}/${level}/catalog`);
 
   startAttempt = (input: StartAttemptInput) =>
-    req<AttemptView>('/attempts', { method: 'POST', body: JSON.stringify(input) });
-  resumeAttempt = (attemptId: string) => req<AttemptView>(`/attempts/${attemptId}`);
-  findResumableAttempt = () => req<{ attemptId: string; label: string } | null>('/attempts/resumable');
+    this.signedIn()
+      ? req<AttemptView>('/attempts', { method: 'POST', body: JSON.stringify(input) })
+      : this.guest.start(input);
+
+  resumeAttempt = (attemptId: string) =>
+    isGuestAttemptId(attemptId) ? this.guest.resume(attemptId) : req<AttemptView>(`/attempts/${attemptId}`);
+
+  // Khách không có lượt học dở nào để tiếp — hỏi máy chủ chỉ tổ nhận 401.
+  findResumableAttempt = () =>
+    this.signedIn()
+      ? req<{ attemptId: string; label: string } | null>('/attempts/resumable')
+      : Promise.resolve(null);
   submitAnswer = (input: {
     attemptId: string;
     questionId: string;
@@ -98,25 +123,38 @@ export class HttpApi implements LearnApi {
     activeMs: number;
     idempotencyKey: string;
   }) =>
-    req<AnswerResult>(`/attempts/${input.attemptId}/answers`, {
-      method: 'POST',
-      body: JSON.stringify(input),
-    });
+    isGuestAttemptId(input.attemptId)
+      ? this.guest.answer(input)
+      : req<AnswerResult>(`/attempts/${input.attemptId}/answers`, {
+          method: 'POST',
+          body: JSON.stringify(input),
+        });
   submitSelfReport = (input: {
     attemptId: string;
     contentId: string;
     remembered: boolean;
     idempotencyKey: string;
   }) =>
-    req<{ duplicate: boolean }>(`/attempts/${input.attemptId}/self-reports`, {
-      method: 'POST',
-      body: JSON.stringify(input),
-    });
-  finishAttempt = (attemptId: string) =>
-    req<AttemptSummary>(`/attempts/${attemptId}/finish`, { method: 'POST' });
-  getAttemptSummary = (attemptId: string) => req<AttemptSummary>(`/attempts/${attemptId}/summary`);
+    isGuestAttemptId(input.attemptId)
+      ? // Khách không có ôn tập giãn cách vì không có gì được lưu lại giữa các buổi.
+        Promise.resolve({ duplicate: false })
+      : req<{ duplicate: boolean }>(`/attempts/${input.attemptId}/self-reports`, {
+          method: 'POST',
+          body: JSON.stringify(input),
+        });
 
-  getProgress = () => req<ProgressView>('/progress');
+  finishAttempt = (attemptId: string) =>
+    isGuestAttemptId(attemptId)
+      ? Promise.resolve(this.guest.finish(attemptId))
+      : req<AttemptSummary>(`/attempts/${attemptId}/finish`, { method: 'POST' });
+
+  getAttemptSummary = (attemptId: string) =>
+    isGuestAttemptId(attemptId)
+      ? Promise.resolve(this.guest.summary(attemptId))
+      : req<AttemptSummary>(`/attempts/${attemptId}/summary`);
+
+  getProgress = () =>
+    this.signedIn() ? req<ProgressView>('/progress') : Promise.resolve(this.guest.emptyProgress());
   getGameData = (kind: 'match' | 'order', lessonIds: LessonId[]) =>
     req<unknown | null>(`/games/${kind}?lessons=${encodeURIComponent(lessonIds.join(','))}`);
 
