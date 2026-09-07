@@ -1,8 +1,20 @@
 # Báo cáo chuẩn bị triển khai — Render Free + Neon Free
 
-**Ngày:** 06/09/2026 · **Trạng thái:** `READY_FOR_DEPLOY`
-Mã nguồn, cấu hình, tài liệu và kiểm thử đã xong và đã chạy trên máy. Bước còn lại là tạo tài
-nguyên trên Render/Neon — cần đăng nhập tài khoản mà phiên làm việc này không có.
+**Ngày:** 07/09/2026 · **Trạng thái:** `DEPLOYED_AND_VERIFIED`
+
+**URL thật:** <https://yct-learn.onrender.com>
+
+| | |
+|---|---|
+| Render | Web Service `yct-learn`, plan **free**, region Singapore, Blueprint `exs-daf8bun40ujc73a43kj0`, sync từ commit `0fa3f74` |
+| Neon | project `tiny-band-98616722`, branch `production`, region **AWS ap-southeast-1**, database `neondb`, plan **free** |
+| Lược đồ | đã migrate (`001_init.sql`) |
+| Dữ liệu khởi tạo | đã seed: 4 người dùng, 1 lớp, 27 bài, 571 mục nội dung |
+
+> **Website chạy được, nhưng CHƯA dạy được một buổi học nào.** Toàn bộ 571 mục nội dung đang ở
+> trạng thái **nháp** và giao diện giáo viên hiện **không có** đường đi từ nháp/đã duyệt sang
+> **đã xuất bản** — xem [mục 9](#9-vướng-mắc-còn-lại-website-chưa-dạy-được). Đây là khoảng trống
+> của ứng dụng, không phải của phần triển khai.
 
 ---
 
@@ -162,9 +174,12 @@ của Node xác minh được; **không** dùng `rejectUnauthorized: false`.
 
 ## 5. Kết quả kiểm thử
 
-Môi trường: macOS · Node 22.18.0 · PostgreSQL **17.6** (chạy cục bộ) ·
-Chromium (Browser pane). Bản build production, `NODE_ENV=production`, khởi động bằng
-`npm start` — **không** dùng `vite preview` hay `tsx watch`.
+Hai vòng kiểm thử:
+
+- **Cục bộ** (06/09): macOS · Node 22.18.0 · PostgreSQL **17.6** · Chromium. Bản build
+  production, `NODE_ENV=production`, khởi động bằng `npm start` — **không** dùng `vite preview`
+  hay `tsx watch`.
+- **Trên hạ tầng thật** (07/09): <https://yct-learn.onrender.com> qua HTTPS, dữ liệu ở Neon.
 
 | ID | Kiểm tra | Kết quả | Bằng chứng |
 |---|---|---|---|
@@ -178,7 +193,26 @@ Chromium (Browser pane). Bản build production, `NODE_ENV=production`, khởi �
 | DATA-03 | Giáo viên xuất bản, phiên khác đọc lại | **PASS** | 4 test tự động trên Postgres thật: gửi hai lần không nhân đôi; hai giáo viên sửa cùng lúc — người sau không ghi đè âm thầm; lô có lỗi không âm thầm đăng phần hợp lệ; lượt học đang chạy giữ revision cũ trong khi thiết bị mới thấy revision mới |
 | SEC-01 | Bundle / static routes không lộ gì | **PASS** | `/.env` → `404`, không lộ nội dung; `/../package.json`, `/..%2f..%2fpackage.json`, `/%2e%2e/%2e%2e/package.json` → đều ≥400 và không chứa nội dung repo. Chỉ `apps/web/dist` được mở ra. `render.yaml` và `.env.example` không có giá trị thật; `git ls-files` không có `.env`/`.dump`/`dist` |
 | OPS-01 | DB lỗi, request timeout, server vừa thức | **PASS** | Tắt Postgres: liveness vẫn `200`, readiness `503`, trang chủ vẫn `200` (giao diện tải được để báo lỗi trung thực), API trả `500 JSON` với thông báo tiếng Việt, **không lộ chi tiết nội bộ**. Bật lại Postgres → tự phục hồi, không cần restart. Gửi lại cùng `idempotencyKey` → không ghi hai lần |
-| OPS-02 | Dashboard Render/Neon | **BLOCKED** | Phiên làm việc không có tài khoản Render/Neon — xem mục 7 |
+| OPS-02 | Dashboard Render/Neon | **PASS** | Render: web service `yct-learn`, plan **free**, Blueprint sync xanh ở commit `0fa3f74`. Neon: project `tiny-band-98616722`, plan **free**, branch `production`, ap-southeast-1 |
+
+### Kiểm thử lại trên hạ tầng thật (07/09, HTTPS + Neon)
+
+| Kiểm tra | Kết quả | Bằng chứng |
+|---|---|---|
+| Build và deploy trên Render | **PASS** | Blueprint sync xanh; dịch vụ chạy; `npm ci --include=dev` cài đủ TypeScript/Vite |
+| Bản build đúng chế độ server | **PASS** | Bundle phục vụ là `index-BvMAWHCm.js` — đúng hash của bản `VITE_BACKEND=server` dựng cục bộ, **không** kèm chunk demo `items-*.js` (giảm ~380 kB) |
+| Liveness / readiness | **PASS** | `/api/health` → `200 {"ok":true}` trong 0.47s; `/api/health/db` → `200` trong 0.38s (Neon phản hồi) |
+| API đọc dữ liệu thật từ Neon | **PASS** | `/api/curricula` trả YCT 1 và HSK 1 đúng như đã seed |
+| DEP-02 mở thẳng route giao diện | **PASS** | `/`, `/tien-do`, `/giao-vien`, `/chon`, `/hoc/<uuid>` → đều `200 text/html` |
+| DEP-03 404 đúng loại | **PASS** | `/api/khong-co`, `/assets/khong-co.js`, `POST /tien-do` → `404 application/json`; `/.env` → `404` |
+| Header bảo mật trên HTTPS thật | **PASS** | `strict-transport-security: max-age=31536000; includeSubDomains`, CSP đầy đủ, `x-content-type-options: nosniff`, `x-frame-options: SAMEORIGIN` |
+| Quy tắc cache | **PASS** | `/` → `no-cache`; `/assets/index-<hash>.js` → `public, max-age=31536000, immutable` |
+| AUTH-01 đăng nhập giáo viên | **PASS** | `200`; cookie `sid` có `HttpOnly; Secure; SameSite=Lax`, `Path=/`, **không có** `Domain` (host-only) |
+| AUTH-01 đăng nhập học sinh | **PASS** | `200`; `/api/me` trả đúng học sinh và lớp |
+| AUTH-02 phân quyền | **PASS** | khách → `401`; giáo viên → `200`; ghi thiếu CSRF token → `403` |
+| Đọc tiến độ | **PASS** | `/api/progress` → `200` |
+| Ngân hàng câu hỏi rỗng | **PASS (đúng thiết kế)** | Tạo lượt học → `409 EMPTY_BANK` "Chưa có bài học nào được duyệt cho phạm vi này." App **từ chối** đưa nội dung chưa duyệt cho trẻ thay vì âm thầm phục vụ |
+| DATA-01 làm bài rồi đọc lại **trên hạ tầng thật** | **NOT RUN** | không thể tạo tiến độ khi chưa có nội dung được xuất bản — xem mục 9. Đã PASS đầy đủ ở vòng cục bộ |
 
 ### Bộ test tự động
 
@@ -245,10 +279,60 @@ chạy của Render và 100 CU-hours của Neon, tức là tự làm hỏng chí
 
 ---
 
+## 9. Vướng mắc còn lại: website chưa dạy được
+
+Phần triển khai đã xong. Vướng mắc nằm ở **ứng dụng**, và nó chặn việc dùng thật.
+
+**Hiện trạng trên <https://yct-learn.onrender.com>:**
+
+```
+revision = 1 · mục đã xuất bản = 0 · mục nháp = 177 (YCT 1) · bài sẵn sàng = 0/12
+POST /api/attempts → 409 EMPTY_BANK
+```
+
+**Vì sao:** `seed` nạp toàn bộ nội dung ở trạng thái `draft` — cố ý, vì nội dung được trích xuất
+từ bản scan và nghĩa tiếng Việt do AI dịch, chưa ai đối chiếu với sách. Học sinh chỉ được thấy
+nội dung `published`.
+
+**Vấn đề:** giao diện giáo viên **không có** đường đi từ `draft`/`reviewed` sang `published`.
+
+| Nơi trong giao diện | Làm được gì | Trạng thái sau đó |
+|---|---|---|
+| Tab **Nội dung** → "Đánh dấu N mục là đã duyệt" | chọn mục, đánh dấu đã duyệt | `reviewed` — học sinh **vẫn chưa thấy** |
+| Tab **Nhập dữ liệu** → "Xuất bản cho lớp" | dán CSV/TSV, kiểm tra, xuất bản | `published` ✓ |
+
+Không có nút nào xuất bản nội dung **đã có sẵn** trong ngân hàng, và cũng không có chức năng xuất
+nội dung đang có ra TSV để dán ngược lại (`toTsv` trong giao diện chỉ dùng in **mẫu trống** để
+tạo Google Sheet). Nghĩa là 571 mục đã seed hiện chỉ để **xem** trong tab Nội dung.
+
+**Đường đi duy nhất hiện nay để lên lớp:** cô giáo tự gõ nội dung vào Google Sheet theo mẫu trong
+tab *Nhập dữ liệu*, dán vào ô nhập, bấm **Kiểm tra** rồi **Xuất bản cho lớp**.
+
+Điều này khớp với cảnh báo sẵn có trong `README.md` ("Chưa khuyến nghị triển khai cho lớp thật")
+và với `docs/BACKLOG.md` mục **P5-9 — BLOCKED, cần cô Ngọc Anh** duyệt 104 từ + 49 câu.
+`BACKLOG.md` cũng ghi rõ: *"Không tự nhận vai người duyệt."*
+
+**Ba hướng xử lý**, theo thứ tự tôi khuyên dùng:
+
+1. **Cô Ngọc Anh dùng tab Nhập dữ liệu** cho một hai bài đầu. Không cần sửa code, và người duyệt
+   nội dung đúng là người phải duyệt. Phù hợp để chạy thử một buổi.
+2. **Thêm nút "Xuất bản các mục đã duyệt"** vào tab Nội dung — đây là tính năng ứng dụng, không
+   phải việc triển khai, nên tôi không tự thêm. Nói một tiếng là tôi làm, kèm test.
+3. **Xuất bản bằng SQL thẳng vào Neon** — tôi **không** làm việc này và không khuyên. Nó vượt qua
+   đúng cái rào chắn mà ứng dụng dựng lên để nội dung AI dịch không tới tay trẻ trước khi có
+   người lớn đọc lại.
+
+---
+
 ## 7. Việc còn cần bạn làm
 
-Ba việc dưới đây cần đăng nhập tài khoản mà phiên làm việc này không có.
-**Đừng dán mật khẩu hay chuỗi kết nối vào khung chat** — nhập thẳng vào giao diện của nhà cung cấp.
+> **Cập nhật 07/09: cả ba việc dưới đây ĐÃ XONG.** Repo đã push, Neon đã tạo và migrate/seed,
+> Render đã deploy và smoke test đạt. Giữ lại phần này để tham chiếu khi dựng lại từ đầu.
+> Việc còn cần bạn làm bây giờ nằm ở [mục 9](#9-vướng-mắc-còn-lại-website-chưa-dạy-được):
+> quyết định cách đưa nội dung lên trạng thái đã xuất bản.
+>
+> Ngoài ra: **đổi mật khẩu** của tài khoản quản trị và giáo viên trong
+> `~/yct-neon-seed-credentials.txt`, rồi xoá tệp đó.
 
 1. **Đẩy nhánh lên GitHub.** Commit đã sẵn sàng trên nhánh `deploy/render-neon-free`; remote
    `https://github.com/thangnn922/learnChinese.git` đã cấu hình và **đang trống** (chưa có nhánh nào).
