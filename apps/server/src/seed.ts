@@ -12,6 +12,7 @@ import { fileURLToPath } from 'node:url';
 import { ContentItemSchema, CurriculumSchema, type ContentItem, type Curriculum } from '@yct/shared';
 import { query, one, tx, closePool } from './db.js';
 import { isMainModule } from './is-main.js';
+import { describeError, requireDatabaseUrl } from './startup.js';
 import { hashPassword } from './auth.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -148,10 +149,14 @@ export async function seed(opts: { quiet?: boolean } = {}): Promise<{ adminEmail
 
 const isMain = isMainModule(import.meta.url);
 if (isMain) {
-  seed()
+  Promise.resolve()
+    .then(() => {
+      requireDatabaseUrl();
+      return seed();
+    })
     .then(() => closePool())
-    .catch((e: Error) => {
-      console.error(e.message);
+    .catch((e: unknown) => {
+      console.error(describeError(e));
       process.exit(1);
     });
 }

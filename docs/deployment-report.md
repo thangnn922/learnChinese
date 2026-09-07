@@ -114,7 +114,19 @@ không có tác dụng. Đặt lại qua `TRUST_PROXY` khi chạy sau proxy khá
 > Không dùng dạng số chặng: Fastify 5 fail-closed với số, sẽ khiến **mọi** người dùng chung một
 > IP (IP của proxy) và giới hạn đăng nhập trở thành giới hạn toàn hệ thống.
 
-### 3.4 `npm run typecheck` và `npm test` thất bại trên bản checkout sạch
+### 3.4 `db:migrate` thất bại mà không in ra bất kỳ thông báo nào
+
+Phát hiện khi chạy thật lên Neon. Thiếu `DATABASE_URL`, `pg` âm thầm chuyển sang thử
+`localhost:5432`; lỗi trả về là `AggregateError` có `message` **rỗng**. `migrate.ts` chỉ in
+`e.message` nên màn hình trống trơn, lệnh thoát mã 1 mà không nói gì. Người vận hành không có
+cách nào biết mình quên đặt biến môi trường.
+
+Sửa: thêm `apps/server/src/startup.ts` với `requireDatabaseUrl()` (dừng ngay, nêu rõ thiếu biến
+nào và ví dụ cách đặt) và `describeError()` (in cả tên, mã lỗi, các lỗi con của `AggregateError`
+và `cause`). Dùng ở `migrate.ts`, `seed.ts` và cả `index.ts` — máy chủ thiếu chuỗi kết nối sẽ
+dừng lúc khởi động thay vì chạy được rồi trả 500 cho từng người dùng. 5 test mới khoá lại hành vi này.
+
+### 3.5 `npm run typecheck` và `npm test` thất bại trên bản checkout sạch
 
 `typecheck` không build `@yct/shared` trước nên báo 20 lỗi "Cannot find module '@yct/shared'".
 `npm test` thất bại ở workspace `@yct/web` vì workspace này chưa có tệp test nào.

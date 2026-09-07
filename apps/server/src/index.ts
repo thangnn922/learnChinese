@@ -1,5 +1,6 @@
 import { buildApp } from './app.js';
 import { closePool } from './db.js';
+import { describeError, requireDatabaseUrl } from './startup.js';
 
 const isProd = process.env.NODE_ENV === 'production';
 
@@ -28,6 +29,15 @@ function readPort(): number {
 /** Trong container phải nghe trên mọi giao diện mạng, nếu không reverse proxy không vào được. */
 const port = readPort();
 const host = process.env.HOST ?? (isProd ? '0.0.0.0' : '127.0.0.1');
+
+// Thiếu chuỗi kết nối thì dừng ngay với thông báo rõ ràng, thay vì khởi động được
+// rồi trả lỗi 500 cho từng người dùng.
+try {
+  requireDatabaseUrl();
+} catch (e) {
+  console.error(describeError(e));
+  process.exit(1);
+}
 
 const app = await buildApp();
 

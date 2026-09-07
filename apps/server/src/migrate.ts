@@ -3,6 +3,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { pool, closePool } from './db.js';
 import { isMainModule } from './is-main.js';
+import { describeError, requireDatabaseUrl } from './startup.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const dir = resolve(here, '../migrations');
@@ -46,13 +47,17 @@ export async function migrate(log = console.log): Promise<string[]> {
 
 const isMain = isMainModule(import.meta.url);
 if (isMain) {
-  migrate()
+  Promise.resolve()
+    .then(() => {
+      requireDatabaseUrl();
+      return migrate();
+    })
     .then((a) => {
       console.log(a.length ? `Đã áp dụng ${a.length} migration.` : 'Lược đồ đã cập nhật.');
       return closePool();
     })
-    .catch((e: Error) => {
-      console.error(e.message);
+    .catch((e: unknown) => {
+      console.error(describeError(e));
       process.exit(1);
     });
 }

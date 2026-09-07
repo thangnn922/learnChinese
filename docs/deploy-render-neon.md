@@ -40,7 +40,12 @@ Cần có:
    | Ứng dụng chạy | **Pooled** | host có `-pooler`, ví dụ `ep-abc-123-pooler.ap-southeast-1.aws.neon.tech` |
    | Chạy migration / sao lưu | **Direct** | host **không** có `-pooler` |
 
-   Cả hai đều kết thúc bằng `?sslmode=require`.
+   Cả hai đều kết thúc bằng `?sslmode=require` (Neon có thể thêm `&channel_binding=require` —
+   giữ nguyên, đã kiểm chứng là kết nối được).
+
+   > Ứng dụng tự đổi `sslmode=require` thành `verify-full` trước khi đưa cho `pg`, và truyền
+   > tuỳ chọn `ssl` tường minh. Chứng chỉ **luôn** được xác minh, không phụ thuộc mặc định của
+   > thư viện. Không cần sửa gì trong chuỗi kết nối.
 
 > **Vì sao migration dùng chuỗi trực tiếp:** `migrate.ts` chạy mỗi tệp `.sql` trong một
 > giao dịch và tạo khoá bảng; `pg_dump` cũng cần phiên bền. Pooler ở chế độ transaction
@@ -71,6 +76,9 @@ npm run db:migrate
 
 Kết quả mong đợi lần đầu: `✓ 001_init.sql`. Chạy lại lần nữa phải in `Lược đồ đã cập nhật.`
 và không thay đổi gì — migration có bảng lịch sử `schema_migrations` và an toàn khi chạy lại.
+
+Nếu quên `export DATABASE_URL`, lệnh dừng ngay với thông báo nói rõ thiếu biến nào —
+không âm thầm thử `localhost`.
 
 ### Seed — CHỈ chạy trên cơ sở dữ liệu mới
 

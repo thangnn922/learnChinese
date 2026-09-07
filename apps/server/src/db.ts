@@ -32,14 +32,42 @@ function sslOption(raw: string | undefined): false | { rejectUnauthorized: true 
 }
 
 /**
+ * Chuẩn hoá `sslmode` trong chuỗi kết nối.
+ *
+ * `pg` hiện coi `sslmode=require` như `verify-full` nhưng in SECURITY WARNING mỗi lần kết nối,
+ * và ở bản major kế tiếp sẽ đổi sang ngữ nghĩa libpq — yếu hơn. Ta đã truyền `ssl` tường minh
+ * nên hành vi không đổi dù thư viện đổi; đổi luôn giá trị trong chuỗi để log triển khai không
+ * còn cảnh báo nói ngược với điều đang thực sự làm.
+ * Chuỗi không phân tích được thì giữ nguyên, không đoán.
+ */
+function normalizeSslMode(raw: string | undefined, tlsOn: boolean): string | undefined {
+  if (!raw || !tlsOn) return raw;
+  try {
+    const u = new URL(raw);
+    const mode = u.searchParams.get('sslmode');
+    if (mode === 'require' || mode === 'prefer' || mode === 'verify-ca') {
+      u.searchParams.set('sslmode', 'verify-full');
+      return u.toString();
+    }
+    return raw;
+  } catch {
+    return raw;
+  }
+}
+
+const sslConfig = sslOption(process.env.DATABASE_URL);
+
+/**
  * Kết nối Postgres. Mọi truy vấn dùng tham số hoá ($1, $2…) — không nối chuỗi SQL.
  *
  * Pool giữ nhỏ: ứng dụng chạy một tiến trình, còn Neon tính tiền theo thời gian compute
  * thức — nhiều kết nối rảnh chỉ làm chậm lúc ngủ chứ không phục vụ thêm ai.
  */
 export const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: sslOption(process.env.DATABASE_URL),
+  connectionString: normalizeSslMode(process.env.DATABASE_URL, sslConfig !== false),
+  // Tuỳ chọn này được `pg` ưu tiên hơn sslmode trong chuỗi kết nối, nên việc xác minh
+  // chứng chỉ được bảo đảm bất kể thư viện đổi mặc định.
+  ssl: sslConfig,
   max: Number(process.env.PG_POOL_MAX ?? 5),
   idleTimeoutMillis: 30_000,
   // Neon ngủ khi rảnh; lần kết nối đầu sau khi ngủ phải chờ compute thức dậy.
