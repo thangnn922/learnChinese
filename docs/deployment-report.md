@@ -11,10 +11,10 @@
 | Lược đồ | đã migrate (`001_init.sql`) |
 | Dữ liệu khởi tạo | đã seed: 4 người dùng, 1 lớp, 27 bài, 571 mục nội dung |
 
-> **Website chạy được, nhưng CHƯA dạy được một buổi học nào.** Toàn bộ 571 mục nội dung đang ở
-> trạng thái **nháp** và giao diện giáo viên hiện **không có** đường đi từ nháp/đã duyệt sang
-> **đã xuất bản** — xem [mục 9](#9-vướng-mắc-còn-lại-website-chưa-dạy-được). Đây là khoảng trống
-> của ứng dụng, không phải của phần triển khai.
+> **Nội dung đã được xuất bản để giáo viên dùng thử** (revision 2, 571 mục). Website chạy được
+> một buổi học đầy đủ. Nội dung **vẫn chưa được đối chiếu với sách** — giao diện hiện nhãn
+> "Nội dung nháp — chưa có giáo viên duyệt" và quay lui được về revision 1 bất cứ lúc nào.
+> Xem [mục 9](#9-xuất-bản-nội-dung-để-dùng-thử).
 
 ---
 
@@ -212,7 +212,8 @@ Hai vòng kiểm thử:
 | AUTH-02 phân quyền | **PASS** | khách → `401`; giáo viên → `200`; ghi thiếu CSRF token → `403` |
 | Đọc tiến độ | **PASS** | `/api/progress` → `200` |
 | Ngân hàng câu hỏi rỗng | **PASS (đúng thiết kế)** | Tạo lượt học → `409 EMPTY_BANK` "Chưa có bài học nào được duyệt cho phạm vi này." App **từ chối** đưa nội dung chưa duyệt cho trẻ thay vì âm thầm phục vụ |
-| DATA-01 làm bài rồi đọc lại **trên hạ tầng thật** | **NOT RUN** | không thể tạo tiến độ khi chưa có nội dung được xuất bản — xem mục 9. Đã PASS đầy đủ ở vòng cục bộ |
+| DATA-01 làm bài rồi đọc lại **trên hạ tầng thật** | **PASS** | Sau khi xuất bản nội dung: catalog `revision 2`, 11/12 bài sẵn sàng, 177 mục published. Học sinh tạo lượt học → 3 câu; trả lời câu 1 → máy chủ chấm và trả `reveal`; gửi lại cùng `idempotencyKey` → `duplicate: true`, `totalAnswered` vẫn là 1; kết thúc lượt → `200`; đọc lại `/api/progress` → dữ liệu đúng từ Neon |
+| Nhãn cảnh báo nội dung chưa duyệt | **PASS** | Trang chủ trên trình duyệt hiện "Nội dung nháp — chưa có giáo viên duyệt" kèm ghi chú nguồn; `verificationStatus` trong DB vẫn là `needs_teacher_check` (177) và `unverified_no_source` (394) |
 
 ### Bộ test tự động
 
@@ -279,48 +280,57 @@ chạy của Render và 100 CU-hours của Neon, tức là tự làm hỏng chí
 
 ---
 
-## 9. Vướng mắc còn lại: website chưa dạy được
+## 9. Xuất bản nội dung để dùng thử
 
-Phần triển khai đã xong. Vướng mắc nằm ở **ứng dụng**, và nó chặn việc dùng thật.
+Sau khi seed, toàn bộ 571 mục ở trạng thái `draft` nên `POST /api/attempts` trả `409 EMPTY_BANK` —
+đúng thiết kế: học sinh chỉ thấy nội dung `published`.
 
-**Hiện trạng trên <https://yct-learn.onrender.com>:**
-
-```
-revision = 1 · mục đã xuất bản = 0 · mục nháp = 177 (YCT 1) · bài sẵn sàng = 0/12
-POST /api/attempts → 409 EMPTY_BANK
-```
-
-**Vì sao:** `seed` nạp toàn bộ nội dung ở trạng thái `draft` — cố ý, vì nội dung được trích xuất
-từ bản scan và nghĩa tiếng Việt do AI dịch, chưa ai đối chiếu với sách. Học sinh chỉ được thấy
-nội dung `published`.
-
-**Vấn đề:** giao diện giáo viên **không có** đường đi từ `draft`/`reviewed` sang `published`.
+Giao diện giáo viên **không có** đường đi từ `draft`/`reviewed` sang `published`:
 
 | Nơi trong giao diện | Làm được gì | Trạng thái sau đó |
 |---|---|---|
 | Tab **Nội dung** → "Đánh dấu N mục là đã duyệt" | chọn mục, đánh dấu đã duyệt | `reviewed` — học sinh **vẫn chưa thấy** |
-| Tab **Nhập dữ liệu** → "Xuất bản cho lớp" | dán CSV/TSV, kiểm tra, xuất bản | `published` ✓ |
+| Tab **Nhập dữ liệu** → "Xuất bản cho lớp" | dán CSV/TSV mới, kiểm tra, xuất bản | `published` |
 
-Không có nút nào xuất bản nội dung **đã có sẵn** trong ngân hàng, và cũng không có chức năng xuất
-nội dung đang có ra TSV để dán ngược lại (`toTsv` trong giao diện chỉ dùng in **mẫu trống** để
-tạo Google Sheet). Nghĩa là 571 mục đã seed hiện chỉ để **xem** trong tab Nội dung.
+Không có nút xuất bản nội dung **đã có sẵn** trong ngân hàng, và cũng không có chức năng xuất
+nội dung hiện tại ra TSV để dán ngược (`toTsv` trong giao diện chỉ in **mẫu trống**).
 
-**Đường đi duy nhất hiện nay để lên lớp:** cô giáo tự gõ nội dung vào Google Sheet theo mẫu trong
-tab *Nhập dữ liệu*, dán vào ô nhập, bấm **Kiểm tra** rồi **Xuất bản cho lớp**.
+### Giải pháp: `scripts` phía máy chủ, không phải SQL thô
 
-Điều này khớp với cảnh báo sẵn có trong `README.md` ("Chưa khuyến nghị triển khai cho lớp thật")
-và với `docs/BACKLOG.md` mục **P5-9 — BLOCKED, cần cô Ngọc Anh** duyệt 104 từ + 49 câu.
-`BACKLOG.md` cũng ghi rõ: *"Không tự nhận vai người duyệt."*
+Theo yêu cầu, nội dung đã được xuất bản để cô Ngọc Anh dùng thử. Việc này làm qua
+`apps/server/src/publish-all.ts`, **không** phải `UPDATE` thẳng vào cơ sở dữ liệu:
 
-**Ba hướng xử lý**, theo thứ tự tôi khuyên dùng:
+```bash
+set -a && . ./.env.local && set +a
+DATABASE_URL="$DATABASE_URL_UNPOOLED" ACTOR_EMAIL='giaovien@example.local' \
+  DRY_RUN=1 npm run db:publish-all      # xem trước
+DATABASE_URL="$DATABASE_URL_UNPOOLED" ACTOR_EMAIL='giaovien@example.local' \
+  npm run db:publish-all                # thực hiện
+```
 
-1. **Cô Ngọc Anh dùng tab Nhập dữ liệu** cho một hai bài đầu. Không cần sửa code, và người duyệt
-   nội dung đúng là người phải duyệt. Phù hợp để chạy thử một buổi.
-2. **Thêm nút "Xuất bản các mục đã duyệt"** vào tab Nội dung — đây là tính năng ứng dụng, không
-   phải việc triển khai, nên tôi không tự thêm. Nói một tiếng là tôi làm, kèm test.
-3. **Xuất bản bằng SQL thẳng vào Neon** — tôi **không** làm việc này và không khuyên. Nó vượt qua
-   đúng cái rào chắn mà ứng dụng dựng lên để nội dung AI dịch không tới tay trẻ trước khi có
-   người lớn đọc lại.
+Bốn tính chất được giữ, mỗi tính chất có test:
+
+1. **Tạo revision mới** (1 → 2). Revision 1 còn nguyên với 571 mục chưa xuất bản, nên
+   **quay lui được** từ *Khu vực giáo viên → Nội dung*.
+2. **Ghi `audit_events`** kèm `actor_id` là tài khoản giáo viên thật — không có thay đổi vô danh.
+3. **Không đụng `source.verificationStatus`.** Trong DB vẫn là `needs_teacher_check` (177 mục YCT)
+   và `unverified_no_source` (394 mục HSK). Giao diện vì thế vẫn hiện nhãn
+   "Nội dung nháp — chưa có giáo viên duyệt". Script **không** tự nhận vai người duyệt.
+4. **Chạy lại an toàn**: lần hai báo "không có gì để xuất bản", không tạo revision thừa.
+
+Script từ chối tài khoản không tồn tại hoặc đã bị vô hiệu hoá, và bắt buộc có `ACTOR_EMAIL`.
+Lược đồ cấm học sinh có email nên học sinh không bao giờ trở thành người xuất bản.
+
+### Việc này KHÔNG thay thế việc duyệt nội dung
+
+`docs/BACKLOG.md` mục **P5-9** vẫn **BLOCKED**: cô Ngọc Anh cần đối chiếu 104 từ và 49 câu với
+sách. Xuất bản chỉ làm nội dung **hiển thị được để đánh giá**; nó không biến bản dịch của AI
+thành bản dịch đã được người lớn xác nhận. Sau khi đối chiếu, dùng nút
+"Đánh dấu N mục là đã duyệt" trong tab Nội dung để đặt `verified_by_teacher` — lúc đó nhãn
+cảnh báo mới biến mất.
+
+**Muốn quay lui:** Khu vực giáo viên → Nội dung → rollback về revision 1. Không mất lịch sử,
+không mất tiến độ học sinh.
 
 ---
 

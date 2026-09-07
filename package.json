@@ -22,7 +22,8 @@
     "db:seed": "npm run -w @yct/server seed",
     "start": "npm run -w @yct/server start",
     "db:migrate:dist": "npm run -w @yct/server migrate:dist",
-    "db:seed:dist": "npm run -w @yct/server seed:dist"
+    "db:seed:dist": "npm run -w @yct/server seed:dist",
+    "db:publish-all": "npm run -w @yct/server publish-all"
   },
   "devDependencies": {
     "lighthouse": "^12.2.1",

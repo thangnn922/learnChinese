@@ -117,6 +117,19 @@ npm run db:seed
 - Seed **không** chạy tự động lúc khởi động hay lúc deploy.
 - Không có mật khẩu mặc định nào nằm trong repo. **Đổi mật khẩu ngay sau lần đăng nhập đầu.**
 
+### Xuất bản nội dung để giáo viên dùng thử
+
+Sau seed, mọi mục ở trạng thái nháp nên học sinh chưa làm được bài. Muốn cho giáo viên dùng thử
+ngay mà không phải nhập lại nội dung:
+
+```bash
+DATABASE_URL='…chuỗi direct…' ACTOR_EMAIL='giaovien@…' DRY_RUN=1 npm run db:publish-all
+DATABASE_URL='…chuỗi direct…' ACTOR_EMAIL='giaovien@…' npm run db:publish-all
+```
+
+Tạo một revision mới, ghi audit kèm người thực hiện, và **không** đánh dấu nội dung là đã được
+giáo viên duyệt — nhãn cảnh báo vẫn hiện. Quay lui ở *Khu vực giáo viên → Nội dung → rollback*.
+
 ---
 
 ## 3. Đưa mã nguồn lên GitHub

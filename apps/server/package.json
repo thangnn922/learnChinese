@@ -13,7 +13,8 @@
     "seed": "npm run -w @yct/shared build && tsx src/seed.ts",
     "test": "npm run -w @yct/shared build && vitest run",
     "migrate:dist": "node dist/migrate.js",
-    "seed:dist": "node dist/seed.js"
+    "seed:dist": "node dist/seed.js",
+    "publish-all": "npm run -w @yct/shared build && tsx src/publish-all.ts"
   },
   "dependencies": {
     "@fastify/cookie": "11.1.2",
