@@ -334,6 +334,72 @@ không mất tiến độ học sinh.
 
 ---
 
+## 10. Tài khoản và chế độ khách (07/09)
+
+### Tài khoản đã tạo trên Neon
+
+| Vai trò | Đăng nhập bằng | Lớp |
+|---|---|---|
+| Giáo viên | `laosungocanh` | thành viên cả hai lớp dưới |
+| Học sinh | mã lớp `HSK1-A` + biệt danh `ngocthang` + mã truy cập | Lớp HSK 1 — A |
+| Học sinh | mã lớp `YCT1-B` + biệt danh `ngochieu` + mã truy cập | Lớp YCT 1 — B |
+
+Tạo bằng `apps/server/src/accounts.ts` (`npm run db:account teacher|student`) — giao diện
+quản trị chỉ tạo được tài khoản người lớn và **không có** chỗ nào tạo học sinh. Script
+idempotent và **không** âm thầm đổi mật khẩu tài khoản đã tồn tại.
+
+Ba điều cần biết:
+
+1. **Mật khẩu giáo viên yếu.** Dạng "tên + 123" trên một URL công khai, đoán được nhanh.
+   Tài khoản này xem được dữ liệu học tập của mọi học sinh. Nên đổi sau khi dùng thử.
+   Hiện **chưa có endpoint đổi mật khẩu** — cách khả thi là tạo tài khoản mới rồi vô hiệu hoá
+   tài khoản cũ.
+2. **Học sinh không có mật khẩu** theo thiết kế lược đồ: đăng nhập là *mã lớp + biệt danh +
+   mã truy cập*, và ràng buộc `student_has_no_email` cấm học sinh có email.
+3. **Ứng dụng không ràng buộc học sinh với một giáo trình.** Hai lớp riêng chỉ giúp cô giao bài
+   theo lớp; cả hai em vào trang chủ vẫn chọn được cả YCT lẫn HSK. Muốn chặn cứng phải thêm tính năng.
+
+### Chế độ khách: luyện tập và chơi không cần đăng nhập
+
+| Ràng buộc | Cách bảo đảm |
+|---|---|
+| Máy chủ vẫn chấm điểm | `/api/practice/answer` chấm bằng cùng hàm `grade()` của đường có tài khoản; đáp án không rời máy chủ |
+| Không ghi gì vào cơ sở dữ liệu | test đếm số dòng của 6 bảng trước và sau cả một buổi luyện tập — phải bằng nhau |
+| Không cookie, không thu thập gì | test kiểm tra phản hồi `/api/practice/start` không đặt cookie nào |
+| Chỉ lộ nội dung đã xuất bản | test: khi chưa xuất bản thì trả `409 EMPTY_BANK` và phản hồi không chứa chữ Hán nào |
+| Ranh giới quyền không đổi | khách gọi `/api/progress`, `/api/teacher/*`, `/api/attempts` → `401` |
+
+Không lưu trạng thái ở máy chủ mà vẫn chấm được là nhờ bộ sinh câu hỏi **tất định theo seed**:
+`practiceId` mang sẵn revision và phạm vi bài, nên mỗi lần chấm máy chủ dựng lại đúng bộ câu hỏi
+đó. Buổi luyện tập vì thế sống sót qua cả việc tải lại trang lẫn khởi động lại máy chủ.
+
+Hai thay đổi bắt buộc đi kèm:
+
+- `itemsAt` thêm `ORDER BY item_id`. Thiếu nó, cùng một seed vẫn có thể ra bộ câu hỏi khác nhau
+  vì Postgres không bảo đảm thứ tự dòng khi không có `ORDER BY`.
+- `publishedItemsAt` nhớ nội dung theo revision trong bộ nhớ tiến trình. Revision là bất biến nên
+  bản nhớ không bao giờ cũ; nhờ vậy mỗi lần chấm không phải đọc lại 571 dòng từ Neon.
+
+Tiến trình trong buổi giữ ở `sessionStorage` của tab. Đóng tab là mất — và trang Tiến độ **nói
+thẳng điều đó** thay vì để trẻ vừa học xong lại thấy "chưa có dữ liệu".
+
+### Kiểm thử trên hạ tầng thật (07/09)
+
+| Kiểm tra | Kết quả |
+|---|---|
+| Ba tài khoản đăng nhập trên HTTPS | **PASS** — sai mã truy cập → `401` |
+| Khách bắt đầu luyện tập, không cookie | **PASS** — 3 câu, revision 2 |
+| Phản hồi không chứa đáp án | **PASS** |
+| Máy chủ chấm và trả phần hé lộ | **PASS** |
+| Trò chơi `match` và `order` khi chưa đăng nhập | **PASS** — `200` |
+| Khách vẫn bị chặn ở `/api/progress`, `/api/teacher/*`, `/api/attempts` | **PASS** — `401` |
+| Trên trình duyệt: học → tải lại giữa buổi → kết thúc → trang kết quả | **PASS** — quay lại đúng câu 5/10, tổng kết đúng |
+| Học sinh đăng nhập vẫn đi đường có lưu tiến độ | **PASS** — attemptId là UUID, `totalAnswered` tăng |
+
+Bộ test: **43** (shared) + **56** (server, Postgres thật) = **99**.
+
+---
+
 ## 7. Việc còn cần bạn làm
 
 > **Cập nhật 07/09: cả ba việc dưới đây ĐÃ XONG.** Repo đã push, Neon đã tạo và migrate/seed,
